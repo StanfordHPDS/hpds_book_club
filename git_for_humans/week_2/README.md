@@ -17,7 +17,7 @@ This week, we'll read the second chapter, "Basics".
 - [`git add`](https://www.atlassian.com/git/tutorials/saving-changes)
 - [`git commit`](https://www.atlassian.com/git/tutorials/saving-changes/git-commit)
 
-This section also briefly covers [bash](https://explainshell.com/). 
+This section also briefly covers [using the command line](https://jeroenjanssens.com/dsatcl/). 
 
 ## Tasks
 
