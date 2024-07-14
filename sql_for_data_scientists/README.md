@@ -22,7 +22,7 @@ Each week is organized as a folder here, which each folder containing informatio
 In addition to the book, we'll rely on a few other sources:
 
 * [SQLBolt](https://sqlbolt.com/): an browser-based, interactive tutorial for additional practice.
-* [DuckDB documentation](https://duckdb.org/docs/sql/introduction): 
+* [DuckDB documentation](https://duckdb.org/docs/sql/introduction): Documentation specific to DuckDB but mostly applicable to other SQL flavors.
 
 You might also like these resources if you want to dive deeper:
 * [Mode SQL tutorial](https://mode.com/sql-tutorial): Another popular tutorial for SQL. It's not quite interactive, although they offer a way to load the tutorial database in the browser using their Mode IDE. 
