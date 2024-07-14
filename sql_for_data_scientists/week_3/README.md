@@ -22,5 +22,5 @@
 ### SQL resources
 
 - [Chapter 3 queries](https://sqlfordatascientists.com/chapter-3/)
-- [SQLBolt tutorials 2, 3, 4 and review 101](https://sqlbolt.com/lesson/select_queries_with_constraints)
+- [SQLBolt tutorials 2, 3, 4 and review](https://sqlbolt.com/lesson/select_queries_with_constraints)
 
