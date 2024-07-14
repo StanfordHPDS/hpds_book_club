@@ -117,5 +117,6 @@ result <- dbGetQuery(con, sql_script)
 
 ### SQL resources
 
+- [Chapter 2 queries](https://sqlfordatascientists.com/chapter-2/)
 - [SQLBolt: SELECT queries 101](https://sqlbolt.com/lesson/select_queries_introduction)
 
