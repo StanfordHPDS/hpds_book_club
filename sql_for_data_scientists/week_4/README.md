@@ -14,5 +14,7 @@
   
 ## Bonus material
 
-None this week! 
+### SQL resources
+
+- [Chapter 4 queries](https://sqlfordatascientists.com/chapter-4/)
 
