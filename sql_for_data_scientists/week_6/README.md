@@ -1,5 +1,5 @@
 
-# SQL for Data Scientists: Week 5, "Aggregating Results for Analysis"
+# SQL for Data Scientists: Week 6, "Aggregating Results for Analysis"
 
 <!-- badges: start -->
 <!-- badges: end -->
