@@ -11,7 +11,7 @@
 - [Comparisons](https://duckdb.org/docs/sql/expressions/comparison_operators)
 - [`IN`](https://duckdb.org/docs/sql/expressions/in)
 - [`LIKE`](https://duckdb.org/docs/sql/functions/pattern_matching)
-- [Subquries](https://duckdb.org/docs/sql/expressions/subqueries)
+- [Subqueries](https://duckdb.org/docs/sql/expressions/subqueries)
 
 ## Tasks
 
