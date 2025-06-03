@@ -1,0 +1,299 @@
+---
+title: "Instrumental Variables"
+author: "Malcolm Barrett"
+format: kakashi-revealjs
+---
+
+# Part 1: Instrumental variables
+
+## What are IVs?
+
+- Instrumental variables (IV) solve endogeneity by using a variable \( Z \) that affects the treatment \( X \) but is otherwise unrelated to the outcome \( Y \).
+
+## What are IVs?
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+library(ggdag)
+library(dagitty)
+library(tidyverse)
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+dag_encouragement <- dagitty("dag {
+  Randomization -> Exposure -> Outcome
+  OtherCause -> Outcome
+}")
+
+ggdag(dag_encouragement, use_text = FALSE, layout = "time_ordered") +
+  geom_dag_label_repel2(aes(label = name), color = "black") +
+  labs(title = "Basic RCT") +
+  theme_dag()
+```
+
+## What are IVs?
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| fig-width: 7.5
+dag_encouragement <- dagitty("dag {
+  Encouragement -> ProgramParticipation -> Earnings
+  Motivation -> ProgramParticipation
+  Motivation -> Earnings
+}")
+
+ggdag(dag_encouragement, text = FALSE, layout = "time_ordered") +
+  geom_dag_text(aes(label = name), color = "black", nudge_y = -.5) +
+  labs(title = "Encouragement Design (RCT with Noncompliance)") +
+  theme_dag()
+```
+
+::: {.small}
+
+* Analyzing the randomized variable estimates the Intent to Treat Effect
+* Using randomized variable as IV gives us the Per-Protocol Effect
+
+:::
+
+## Why IVs?
+
+- Unconfoundedness is hard!
+- IV recovers the part of treatment variation that is exogenous---that behaves like a randomized experiment. 
+- We wiggle the IV and see if the treatment then the outcome wiggle, too
+
+## 
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| fig-width: 7.5
+dag_judge <- dagitty("dag {
+  AssignedJudge -> Incarceration -> HighSchoolGrad
+  Risk -> Incarceration
+  Risk -> HighSchoolGrad
+}")
+
+ggdag(dag_judge, text = FALSE, layout = "time_ordered") +
+  geom_dag_text(aes(label = name), color = "black", nudge_y = -.5) +
+  labs(title = "Judge Assignment") +
+  theme_dag() +
+  expand_plot()
+```
+
+## Formal Assumptions for Identification: Relevance
+
+- IV must have a non-zero first-stage effect on exposure.
+- Empirically tested via first-stage F-statistics 
+
+## Formal Assumptions for Identification: Exclusion (Validity)   
+- No open back-door paths for IV and outcome except through exposure
+- Cannot be tested directly.
+- Requires theory, design
+
+## Formal Assumptions for Identification: Exclusion (Validity)   
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| fig-width: 7.5
+dag_judge_violation <- dagitty("dag {
+  AssignedJudge -> Incarceration -> HighSchoolGrad
+  AssignedJudge -> HighSchoolGrad
+  Risk -> Incarceration
+  Risk -> HighSchoolGrad
+}")
+
+ggdag(dag_judge_violation, text = FALSE, layout = "time_ordered") +
+  geom_dag_text(aes(label = name), color = "black", nudge_y = -.3) +
+  labs(title = "Judge Assignment with Exclusion Violation") +
+  theme_dag()
+```
+
+## Formal Assumptions for Identification: Monotonicity
+- There are no "defiers." The direction of the effect of IV on exposure is the same (or zero) for all
+
+# Discussion: What random events serving as IVs discussed in the chapter or that you've seen applied are interesting to you?
+
+## Calculating IVs: Intuition
+
+<https://www.nickchk.com/causalgraphs.html#instrumental-variables>
+
+## Calculating IVs
+
+- **First Stage**: Estimate the relationship between the instrument and the exposure.
+This step isolates the part of the exposure that is influenced by the instrument.
+
+- **Second Stage**: Regress the outcome on the predicted values of the exposure from the first stage. This gives the estimated effect of the exposure on the outcome, using only the variation in exposure that is driven by the instrument.
+
+## Other Estimators: **Control Function**
+- Residualize the exposure using the instrument.
+- Include the residual from the first stage as a covariate in the outcome model.
+- Useful in nonlinear models 
+
+## Other Estimators: **LIML (Limited Information Maximum Likelihood)**:
+- Alternative to 2SLS that performs better with weak instruments or many instruments.
+- Uses a likelihood-based approach and is less biased in small samples.
+
+## Other Estimators: **GMM (Generalized Method of Moments)**:
+- General framework for IV estimation.
+- Can incorporate heteroskedasticity and multiple moment conditions.
+
+# Discussion question: who are we estimating an effect for? What is our estimand?
+
+## Simulation
+
+```{r}
+#| echo: false
+set.seed(42)
+
+# Sample size
+n <- 10000
+
+# Randomized encouragement (instrument)
+Z <- rbinom(n, 1, 0.5)
+
+# Compliance behavior
+complier <- rbinom(n, 1, 0.6)
+always_taker <- rbinom(n, 1, 0.2) * (1 - complier)
+never_taker <- 1 - complier - always_taker
+
+# Treatment assignment
+X <- ifelse(complier & Z == 1, 1, 0)
+X <- ifelse(always_taker == 1, 1, X)
+X <- ifelse(never_taker == 1, 0, X)
+
+# Treatment effects
+tau_complier <- 5
+tau_always <- 2
+tau_never <- 0
+
+# Potential outcomes
+Y0 <- rnorm(n, 50, 10)
+Y1 <- Y0 + ifelse(complier == 1, tau_complier,
+                  ifelse(always_taker == 1, tau_always, tau_never))
+
+# Realized outcome
+Y <- ifelse(X == 1, Y1, Y0)
+
+# Create data frame
+df <- tibble(
+  Z = Z,
+  X = X,
+  Y = Y,
+  complier = complier,
+  always_taker = always_taker,
+  never_taker = never_taker
+) |>
+  mutate(
+    type = case_when(
+      complier == 1 ~ "Complier",
+      always_taker == 1 ~ "Always-Taker",
+      TRUE ~ "Never-Taker"
+    ),
+    treatment_effect = case_when(
+      type == "Complier" ~ tau_complier,
+      type == "Always-Taker" ~ tau_always,
+      type == "Never-Taker" ~ tau_never
+    )
+  )
+
+df
+```
+
+## Simulation
+
+```{r}
+#| echo: false
+# Reduced form: Z → Y
+reduced_form <- coef(lm(Y ~ Z, data = df))[2]
+
+# First stage: Z → X
+first_stage <- coef(lm(X ~ Z, data = df))[2]
+
+# Wald estimator for LATE
+estimated_late <- reduced_form / first_stage
+
+# True LATE
+true_late <- tau_complier
+
+# True ATE
+true_ate <- mean(df$treatment_effect)
+
+# Print results
+tibble(
+  `Reduced Form (Z→Y)` = reduced_form,
+  `First Stage (Z→X)` = first_stage,
+  `Estimated LATE` = estimated_late,
+  `True LATE (Compliers)` = true_late,
+  `True ATE (Population)` = true_ate
+) |> gt::gt()
+```
+
+## Simulation
+
+```{r}
+#| echo: false
+ggplot(df, aes(x = type, y = treatment_effect, fill = type)) +
+  geom_boxplot() +
+  geom_hline(yintercept = true_ate, color = "blue", linetype = "dashed", linewidth = 1) +
+  geom_hline(yintercept = true_late, color = "red", linetype = "dashed", linewidth = 1) +
+  labs(
+    title = "Treatment Effects by Compliance Type",
+    x = "Compliance Type",
+    y = "Individual Treatment Effect (Y1 - Y0)",
+    subtitle = "Dashed red = True LATE, Dashed blue = True ATE"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+
+# Part 2: Judge IV paper
+
+## Context and Empirical Strategy
+- **Research question**: Does juvenile incarceration affect educational and criminal outcomes?
+- **Problem**: Endogenous selection into incarceration.
+- **Solution**: Use random assignment of judges as an instrument.
+- Judges differ systematically in their propensity to incarcerate but are assigned randomly within a court calendar
+- **Instrument**: Leave-one-out mean incarceration rate for each judge from their other first-time cases.
+
+## Design 
+- **Data**: Linked juvenile court records, public school data, and adult incarceration records for 35,000 juveniles.
+- **IV estimator**: Jackknife IV estimator (JIVE) to reduce bias due to many instruments (i.e., many judges).
+- **Controls**: Fixed effects for community × year × weapon offense to isolate judge effect within comparable groups.
+
+## Main Results
+- **High School Graduation**: Incarceration reduces graduation by 13 percentage points.
+- **Adult Incarceration**: Increases likelihood of adult incarceration by 23 percentage points}.
+- OLS estimates were even larger (but likely biased): −39 pp for graduation and +41 pp for adult incarceration.
+
+# Discussion question: When can we meaningfully compare the ATE to the LATE?
+
+## Validity Checks and Mechanisms
+- **Random Assignment**: Confirmed through administrative design and balance tests across judge leniency terciles
+
+## Validity Checks and Mechanisms
+- **Monotonicity**: Judges more likely to incarcerate for one offense type are also more likely for others, supporting monotonicity assumption
+
+## Validity Checks and Mechanisms
+- Incarcerated juveniles often don’t return to school.
+- When they do, they’re more likely to be labeled with behavioral/emotional disorders (but not cognitive disabilities).
+- No evidence they’re systematically moved to worse schools.
+
+# Discussion Question: How much work on "mechnanism" of effect can we do in a data set after a causal analysis?
+
+## Policy Implications
+- Juvenile incarceration, even short-term, has long-lasting negative effects.
+- Results suggest benefits from diversion programs and non-custodial sanctions.
+- Findings are especially relevant in the context of school discipline and police presence.
+
+# Discussion: What did you like and dislike about this paper?
